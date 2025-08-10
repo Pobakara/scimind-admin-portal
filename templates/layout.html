@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}SciMind Admin Portal{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  {% block head %}{% endblock %}
+  {% if request.endpoint == 'upload' %}
+  <style>
+    .main-content, .content-area {
+      overflow-x: hidden !important;
+    }
+  </style>
+  {% endif %}
+  <style>
+    /* Prevent unwanted horizontal scroll */
+    html, body, .main-content, .content-area, .layout-container {
+      max-width: 100vw !important;
+      overflow-x: hidden !important;
+    }
+    /* Custom dark gray scrollbars for all scrollable elements */
+    body, .main-content, .content-area, .sidebar, .classes-table-panel, .class-details-panel, .table-container, .modal-content, .gclass-link-modal-content {
+      scrollbar-width: thin;
+      scrollbar-color: #444 #e0e6ed;
+    }
+    /* Chrome, Edge, Safari */
+    body::-webkit-scrollbar,
+    .main-content::-webkit-scrollbar,
+    .content-area::-webkit-scrollbar,
+    .sidebar::-webkit-scrollbar,
+    .classes-table-panel::-webkit-scrollbar,
+    .class-details-panel::-webkit-scrollbar,
+    .table-container::-webkit-scrollbar,
+    .modal-content::-webkit-scrollbar,
+    .gclass-link-modal-content::-webkit-scrollbar {
+      width: 10px;
+      background: #e0e6ed;
+    }
+    body::-webkit-scrollbar-thumb,
+    .main-content::-webkit-scrollbar-thumb,
+    .content-area::-webkit-scrollbar-thumb,
+    .sidebar::-webkit-scrollbar-thumb,
+    .classes-table-panel::-webkit-scrollbar-thumb,
+    .class-details-panel::-webkit-scrollbar-thumb,
+    .table-container::-webkit-scrollbar-thumb,
+    .modal-content::-webkit-scrollbar-thumb,
+    .gclass-link-modal-content::-webkit-scrollbar-thumb {
+      background: #444;
+      border-radius: 8px;
+    }
+    body::-webkit-scrollbar-thumb:hover,
+    .main-content::-webkit-scrollbar-thumb:hover,
+    .content-area::-webkit-scrollbar-thumb:hover,
+    .sidebar::-webkit-scrollbar-thumb:hover,
+    .classes-table-panel::-webkit-scrollbar-thumb:hover,
+    .class-details-panel::-webkit-scrollbar-thumb:hover,
+    .table-container::-webkit-scrollbar-thumb:hover,
+    .modal-content::-webkit-scrollbar-thumb:hover,
+    .gclass-link-modal-content::-webkit-scrollbar-thumb:hover {
+      background: #222;
+    }
+  
+    /* Calendar widget dropdown styles */
+    .calendar-widget-dropdown #calendar-widget-menu {
+      animation: fadein 0.18s;
+    }
+    .calendar-widget-dropdown #calendar-widget-menu::-webkit-scrollbar {
+      width: 8px;
+      background: #e0e6ed;
+    }
+    .calendar-widget-dropdown #calendar-widget-menu::-webkit-scrollbar-thumb {
+      background: #bfc7d1;
+      border-radius: 6px;
+    }
+    /* Calendar Month View Styles */
+    #calendar-month-view {
+      font-family: 'Inter', Arial, sans-serif;
+      margin-bottom: 12px;
+      background: #f7f8fa;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px #e0e6ed44;
+      padding: 12px 10px 10px 10px;
+      min-width: 260px;
+      max-width: 320px;
+    }
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .calendar-header button {
+      background: none;
+      border: none;
+      color: #0b81a2;
+      font-size: 1.2em;
+      cursor: pointer;
+      padding: 2px 8px;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+    .calendar-header button:hover {
+      background: #e0e6ed;
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      text-align: center;
+    }
+    .calendar-day, .calendar-date {
+      padding: 4px 0;
+      font-size: 0.98em;
+      border-radius: 4px;
+    }
+    .calendar-day {
+      color: #757575;
+      font-weight: 600;
+      background: none;
+    }
+    .calendar-date {
+      background: #fff;
+      color: #2346a0;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .calendar-date.today {
+      background: #0b81a2;
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 2px 8px #0b81a233;
+    }
+    .calendar-date.selected {
+      background: #2346a0;
+      color: #fff;
+      font-weight: 700;
+    }
+    .calendar-date.other-month {
+      color: #bfc7d1;
+      background: #f7f8fa;
+      cursor: default;
+    }
+    .sidebar {
+      overflow-y: visible !important;
+    }
+    </style>
+</head>
+<body>
+  <header class="topbar" style="position:fixed; top:0; left:258px; width:calc(100% - 258px); height:64px; background: #fff;; color:#222; box-shadow:0 4px 24px #0004; border-bottom:2px solid #e0e6ed; display:flex; align-items:center; justify-content:space-between; padding:0 0 0 36px; z-index:200; transition:left 0.22s, width 0.22s;">
+    <div class="topbar-left" style="display:flex; align-items:center; gap:18px;">
+      <!-- Sidebar Collapse Button -->
+      <button id="sidebar-collapse-btn" title="Collapse Sidebar" style="background:none; border:none; color:#757575; font-size:1.4em; padding:0 8px 0 0; cursor:pointer; border-radius:8px; transition:color 0.18s; display:flex; align-items:center; justify-content:center;">
+        <!-- Hamburger (three-line) icon -->
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;" stroke="#757575" stroke-width="2.2" stroke-linecap="round">
+          <line x1="5" y1="8" x2="23" y2="8" />
+          <line x1="5" y1="14" x2="23" y2="14" />
+          <line x1="5" y1="20" x2="23" y2="20" />
+        </svg>
+      </button>
+      <span class="portal-title" style="font-size:1.25rem; font-weight:700;">{% block pagetitle %}DASHBOARD{% endblock %}</span>
+    </div>
+    <div class="topbar-right" style="display:flex; align-items:center; gap:10px; flex-wrap:nowrap; position:relative; height:64px; z-index:9999; background:#fff; overflow-x:visible; margin-left:auto; min-width:0; max-width:100%;">
+      <!-- Notification Icon (Lucide Bell, gray, no background) -->
+      <button class="btn btn-link position-relative" style="color:#757575; font-size:1.2em; padding:0; background:none; border:none; border-radius:8px; z-index:999999;" title="Notifications">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="#757575" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bell"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+
+      <!-- Calendar Widget Icon -->
+      <div class="calendar-widget-dropdown" style="position:relative;">
+        <button id="calendar-widget-btn" class="btn btn-link position-relative" style="color:#757575; font-size:1.35em; padding:0 6px; background:none; border:none; border-radius:8px; z-index:999999;" title="Calendar Quick View">
+          <!-- Lucide calendar icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="#757575" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M3 9h18"/></svg>
+        </button>
+        <div id="calendar-widget-menu" style="display:none; opacity:0; position:absolute; top:44px; right:0; background:#fff; border-radius:12px; box-shadow:0 4px 18px rgba(35,70,160,0.13); min-width:320px; max-width:360px; padding:18px 0 0 0; z-index:999999; transition: opacity 0.22s cubic-bezier(.4,0,.2,1);">
+          <div style="padding:0 22px 12px 22px; border-bottom:1px solid #e0e6ed; display:flex; align-items:center; gap:10px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="#59a89c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar"><rect x="3" y="5" width="16" height="14" rx="2"/><path d="M15 3v4"/><path d="M9 3v4"/><path d="M3 9h16"/></svg>
+            <span style="font-weight:700; color:#2346a0; font-size:1.08em;">Calendar</span>
+            <span id="calendar-widget-date" style="margin-left:auto; color:#757575; font-size:0.98em;"></span>
+          </div>
+          <!-- Month View Calendar Placeholder -->
+          <div id="calendar-month-view" style="padding:18px 22px 0 22px;"></div>
+          <div style="padding:16px 22px 10px 22px;">
+            <div style="font-size:1em; font-weight:600; color:#59a89c; margin-bottom:8px;">Scheduled Tasks</div>
+            <ul id="calendar-tasks-list" style="list-style:none; padding:0; margin:0 0 10px 0; color:#2346a0; font-size:0.98em;">
+              <li>No tasks scheduled for today.</li>
+            </ul>
+            <div style="font-size:1em; font-weight:600; color:#59a89c; margin-bottom:8px;">Special Notes</div>
+            <ul id="calendar-notes-list" style="list-style:none; padding:0; margin:0; color:#444; font-size:0.98em;">
+              <li>No special notes for today.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Launch Icon Dropdown -->
+      <div class="quick-launch-dropdown" style="position:relative;">
+        <button id="quick-launch-btn" class="btn btn-link position-relative" style="color:#757575; font-size:1.35em; padding:0 6px; background:none; border:none; border-radius:8px; z-index:999999;" title="Quick Launch Apps">
+          <!-- Lucide grid icon for apps -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="#757575" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-grid"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
+        </button>
+        <div id="quick-launch-menu" style="display:none; opacity:0; position:absolute; top:44px; right:0; background:#fff; border-radius:10px; box-shadow:0 4px 18px rgba(35,70,160,0.12); min-width:220px; padding:10px 0; z-index:999999; transition: opacity 0.22s cubic-bezier(.4,0,.2,1);">
+          <a href="https://www.youtube.com/" target="_blank" style="display:flex; align-items:center; gap:10px; padding:10px 18px; color:#222; text-decoration:none; font-size:1em;"><i class="fab fa-youtube" style="color:#e53935; font-size:1.2em;"></i> YouTube</a>
+          <a href="https://classroom.google.com/" target="_blank" style="display:flex; align-items:center; gap:10px; padding:10px 18px; color:#222; text-decoration:none; font-size:1em;"><i class="fas fa-chalkboard-teacher" style="color:#388e3c; font-size:1.2em;"></i> Google Classroom</a>
+          <a href="https://mail.google.com/" target="_blank" style="display:flex; align-items:center; gap:10px; padding:10px 18px; color:#222; text-decoration:none; font-size:1em;"><i class="fas fa-envelope" style="color:#0b81a2; font-size:1.2em;"></i> Gmail</a>
+          <a href="https://onedrive.live.com/" target="_blank" style="display:flex; align-items:center; gap:10px; padding:10px 18px; color:#222; text-decoration:none; font-size:1em;"><i class="fab fa-microsoft" style="color:#0078d4; font-size:1.2em;"></i> OneDrive</a>
+          <a href="https://drive.google.com/" target="_blank" style="display:flex; align-items:center; gap:10px; padding:10px 18px; color:#222; text-decoration:none; font-size:1em;"><i class="fab fa-google-drive" style="color:#0b81a2; font-size:1.2em;"></i> Google Drive</a>
+          <a href="https://zoom.us/signin" target="_blank" style="display:flex; align-items:center; gap:10px; padding:10px 18px; color:#222; text-decoration:none; font-size:1em;"><i class="fas fa-video" style="color:#2346a0; font-size:1.2em;"></i> Zoom</a>
+          <a href="https://go.cambridge.org/account/login" target="_blank" style="display:flex; align-items:center; gap:10px; padding:10px 18px; color:#222; text-decoration:none; font-size:1em;"><i class="fas fa-book" style="color:#8e24aa; font-size:1.2em;"></i> Cambridge GO</a>
+        </div>
+      </div>
+
+      <!-- Modern vertical separator -->
+      <div class="topbar-separator" style="height:36px; width:2px; background:linear-gradient(to bottom, #e0e6ed 0%, #bfc7d1 100%); margin:0 18px; border-radius:2px; box-shadow:0 1px 4px #e0e6ed44; align-self:center;"></div>
+
+      <!-- Username and Avatar -->
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div class="username-dropdown" style="position:relative; display:inline-flex; align-items:center; gap:8px;">
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:50%; background:#e3e7ef; border:2px solid #d1d7e6; overflow:hidden; cursor:pointer;" id="avatar-btn">
+            {% if current_user.is_authenticated and current_user.profile_pic_url %}
+              <img src="{{ current_user.profile_pic_url }}" alt="Profile" style="width:100%; height:100%; object-fit:cover; border-radius:50%; border:2px solid #388e3c; background:#c8e6c9;">
+            {% else %}
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="#c8e6c9" style="border-radius:50%; border:2px solid #388e3c;">
+                <circle cx="16" cy="16" r="16" fill="#c8e6c9" />
+                <circle cx="16" cy="13" r="6" fill="#388e3c" />
+                <rect x="8" y="22" width="16" height="6" rx="3" fill="#388e3c" />
+              </svg>
+            {% endif %}
+          </span>
+          <span id="username-btn" style="display:flex; flex-direction:column; align-items:flex-start; justify-content:center; cursor:pointer; margin-left:8px;">
+            <span style="font-size:1.08em; font-weight:700; color:#222; line-height:1.1;">{% if current_user.is_authenticated %}{{ current_user.name }}{% else %}Guest{% endif %}</span>
+            <span style="font-size:0.92em; color:#757575; font-weight:400; line-height:1.1; margin-top:2px;">{% if current_user.is_authenticated %}{{ current_user.role|e }}{% else %}User{% endif %}</span>
+          </span>
+          <div id="username-menu" style="display:none; position:absolute; top:48px; right:0; background:#fff; border-radius:10px; box-shadow:0 4px 18px rgba(35,70,160,0.12); min-width:200px; padding:10px 0; z-index:999999;">
+            <div style="padding:10px 18px; font-weight:700; color:#003a7d; font-size:1.08em; border-bottom:1px solid #e0e6ed;">Welcome!</div>
+            <a href="#" style="display:flex; align-items:center; gap:12px; padding:10px 18px; color:#757575; text-decoration:none; font-size:1em;" class="user-menu-link"><i class="fas fa-user-circle"></i> My Account</a>
+            <a href="#" style="display:flex; align-items:center; gap:12px; padding:10px 18px; color:#757575; text-decoration:none; font-size:1em;" class="user-menu-link"><i class="fas fa-cog"></i> Settings</a>
+            <a href="#" style="display:flex; align-items:center; gap:12px; padding:10px 18px; color:#757575; text-decoration:none; font-size:1em;" class="user-menu-link"><i class="fas fa-life-ring"></i> Support</a>
+            <a href="{{ url_for('logout') }}" style="display:flex; align-items:center; gap:12px; padding:10px 18px; color:#757575; text-decoration:none; font-size:1em;" class="user-menu-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          </div>
+        </div>
+      </div>
+      <!-- Logout Icon Button (debug: add label) -->
+      <!-- ...removed duplicate logout button... -->
+    </div>
+  </header>
+
+  <div class="layout-container" style="background:#f7f8fa; min-height:100vh; display:flex;">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar" style="background:#1a2332; width:258px; height:100vh; box-shadow:2px 0 8px rgba(0,0,0,0.04); border-radius:0; display:flex; flex-direction:column; align-items:center; position:fixed; left:0; top:0; bottom:0; z-index:101; transition:width 0.22s;">
+      <div style="width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#1a2332; padding-top:2px;">
+        <img id="sidebar-logo" src="{{ url_for('static', filename='SVG/Horizontal/H - White and Color.svg') }}" alt="Logo" style="width:160px; height:auto; margin-bottom:0; transition:width 0.22s;" />
+        <div id="sidebar-title" style="color:#fff; font-size:1.2rem; font-weight:700; margin-top:2em; margin-bottom: 0.5em; text-align:center; transition:opacity 0.22s;">Admin Portal</div>
+      </div>
+      <nav style="width:100%; margin-top:2em; flex:1;">
+        <ul class="nav-links accordion" id="sidebar-nav" style="list-style:none; padding:0; margin:0;">
+          <li style="margin-bottom:8px;">
+            <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}"
+              style="color:#b0bec5; font-size:0.98em; display:flex; align-items:center; gap:8px; padding:10px 32px; transition:padding 0.22s, gap 0.22s;">
+              <i class="fas fa-home"></i>
+              <span class="nav-text">Dashboard</span>
+            </a>
+          </li>
+          <!-- Manage Students Collapsible Menu -->
+          <li class="nav-item" style="margin-bottom:8px;">
+            <a class="nav-link d-flex align-items-center w-100"
+              href="#"
+              data-bs-toggle="collapse"
+              data-bs-target="#sidebarManageStudentsCollapse"
+              role="button"
+              aria-expanded="false"
+              aria-controls="sidebarManageStudentsCollapse"
+              style="color:#b0bec5; font-size:0.98em; display:flex; align-items:center; padding:10px 32px; background:none; border:none; outline:none; box-shadow:none; text-align:left; width:100%; transition:padding 0.22s;">
+              <i class="fas fa-users"></i>
+              <span class="nav-text" style="margin-left:8px; display:flex; align-items:center; gap:6px;">
+                Manage Students
+                <i class="fas fa-chevron-right sidebar-collapse-arrow" style="font-size:1.1em;"></i>
+              </span>
+            </a>
+            <div class="collapse" id="sidebarManageStudentsCollapse" data-bs-parent="#sidebar-nav">
+              <ul class="nav flex-column sidebar-subtab-list mb-2">
+                <li>
+                  <a class="nav-link sidebar-subtab-link" href="{{ url_for('manage_students') }}#register" id="sidebar-register-student">
+                    <i class="fas fa-user-plus me-2"></i>Register Student
+                  </a>
+                </li>
+                <li>
+                  <a class="nav-link sidebar-subtab-link" href="{{ url_for('manage_students') }}#attendance" id="sidebar-attendance">
+                    <i class="fas fa-calendar-check me-2"></i>Attendance
+                  </a>
+                </li>
+                <li>
+                  <a class="nav-link sidebar-subtab-link" href="{{ url_for('manage_students') }}#payments" id="sidebar-payments">
+                    <i class="fas fa-credit-card me-2"></i>Payments
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </li>
+          <li style="margin-bottom:8px;">
+            <a href="{{ url_for('upload') }}" class="nav-link {% if request.endpoint == 'upload' %}active{% endif %}"
+              style="color:#b0bec5; font-size:0.98em; display:flex; align-items:center; gap:8px; padding:10px 32px; transition:padding 0.22s, gap 0.22s;">
+              <i class="fas fa-upload"></i>
+              <span class="nav-text">Uploads</span>
+            </a>
+          </li>
+          <li style="margin-bottom:8px;">
+            <a href="{{ url_for('manage_classes') }}" class="nav-link {% if request.endpoint == 'manage_classes' %}active{% endif %}"
+              style="color:#b0bec5; font-size:0.98em; display:flex; align-items:center; gap:8px; padding:10px 32px; transition:padding 0.22s, gap 0.22s;">
+              <i class="fas fa-chalkboard"></i>
+              <span class="nav-text">Manage Classes</span>
+            </a>
+          </li>
+          <li style="margin-bottom:8px;">
+            <a href="{{ url_for('users') }}" class="nav-link {% if request.endpoint == 'users' %}active{% endif %}"
+              style="color:#b0bec5; font-size:0.98em; display:flex; align-items:center; gap:8px; padding:10px 32px; transition:padding 0.22s, gap 0.22s;">
+              <i class="fas fa-users"></i>
+              <span class="nav-text">User Management</span>
+            </a>
+          </li>
+          {% if current_user.is_authenticated and current_user.role == 'admin' %}
+          <li style="margin-bottom:8px;">
+            <a href="{{ url_for('admin_mapping') }}" class="nav-link {% if request.endpoint == 'admin_mapping' %}active{% endif %}"
+              style="color:#b0bec5; font-size:0.98em; display:flex; align-items:center; gap:8px; padding:10px 32px; transition:padding 0.22s, gap 0.22s;">
+              <i class="fas fa-link"></i>
+              <span class="nav-text">Admin Mapping</span>
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+      <div style="width:100%; position:absolute; bottom:0; left:0; padding-bottom:24px;">
+        <hr style="border:none; border-top:1px solid #2c3550; margin:0 24px 24px 24px;">
+        <a href="#" class="nav-link sidebar-settings-link" style="color:#b0bec5; font-size:1.05em; display:flex; align-items:center; gap:22px; padding:14px 32px; justify-content:center; background:#232b3e; border-radius:8px; margin:0 24px 16px 24px; text-align:center; transition:padding 0.22s, gap 0.22s;"><i class="fas fa-cog"></i> <span class="sidebar-settings-text">Settings</span></a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" style="flex:1; background:#f7f8fa; min-height:100vh; margin-top:64px; transition:margin-left 0.22s;">
+      <!-- Page Content -->
+      <section class="content-area" style="background:#f7f8fa; height:calc(100vh - 64px); padding:32px 24px; margin-left:258px; overflow-y:auto; transition:margin-left 0.22s;">
+        {% block content %}{% endblock %}
+      </section>
+    </main>
+  </div>
+  {% block scripts %}{% endblock %}
+  <!-- Bootstrap JS Bundle for modal and button functionality -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>   
+  
+  <style>
+    /*#sidebarManageStudentsCollapse.collapse {
+      display: none !important;
+      overflow: visible !important;
+      height: auto !important;
+      transition: height 0.35s ease;
+    }*/
+    
+    /* Sidebar Manage Students subtabs: remove bullets, smaller font */
+    .sidebar-subtab-list {
+      list-style: none;
+      padding-left: 0;      
+      margin: 0;
+    }
+    .sidebar-subtab-list .sidebar-subtab-link {
+      font-size: 0.92em;
+      padding-left: 56px !important;
+      color: #b0bec5;
+      background: none;
+      border: none;
+      align-items: center;
+      gap: 12px;
+      transition: color 0.18s, background 0.18s;
+    }
+    
+    .sidebar-subtab-list .sidebar-subtab-link:hover, .sidebar-subtab-link:focus {
+      color: #59a89c !important;
+      background: #232b3e !important;
+    }
+    .sidebar-subtab-list li {
+      list-style: none;
+      margin-bottom: 2px;
+    }
+    /* Sidebar collapsed styles */
+    .sidebar.collapsed {
+      width: 68px !important;
+    }
+    .sidebar.collapsed #sidebar-logo {
+      width: 38px !important;
+    }
+    .sidebar.collapsed #sidebar-title {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .sidebar.collapsed #sidebar-nav .nav-link {
+      padding: 10px 12px !important;
+      gap: 0 !important;
+      justify-content: center;
+    }
+    .sidebar.collapsed #sidebar-nav .nav-text {
+      display: none !important;
+    }
+    .sidebar.collapsed #sidebar-nav i {
+      font-size: 1.35em !important;
+      margin-right: 0 !important;
+    }
+    .sidebar.collapsed .nav-link {
+      font-size: 1.35em !important;
+    }
+    .sidebar.collapsed .nav-link.active {
+      background: #232b3e !important;
+      border-radius: 8px;
+    }
+    /* Sidebar collapsed: settings tab icon only */
+    .sidebar.collapsed .sidebar-settings-link {
+      padding: 10px 12px !important;
+      gap: 0 !important;
+      justify-content: center;
+      font-size: 1.35em !important;
+    }
+    .sidebar.collapsed .sidebar-settings-link .sidebar-settings-text {
+      display: none !important;
+    }
+    .sidebar.collapsed .sidebar-settings-link i {
+      font-size: 1.35em !important;
+      margin-right: 0 !important;
+    }
+    /* Topbar left padding when sidebar collapsed */
+    body.sidebar-collapsed .topbar {
+      left: 68px !important;
+      width: calc(100% - 68px) !important;
+    }
+    body.sidebar-collapsed .content-area {
+      margin-left: 68px !important;
+    }
+    .user-menu-link i {
+      min-width: 28px;
+      text-align: center;
+      margin-right: 4px;
+      font-size: 1.15em;
+      transition: color 0.18s, font-weight 0.18s;
+    }
+    .user-menu-link {
+      color: #757575 !important;
+      font-weight: 500;
+    }
+    .user-menu-link:hover, .user-menu-link:focus {
+      color: #59a89c !important;
+      font-weight: 700;
+    }
+    .user-menu-link:hover i, .user-menu-link:focus i {
+      color: #59a89c !important;
+      font-weight: 700;
+    }
+    /* Topbar right icon hover effect */
+    .topbar-right button,
+    .topbar-right .btn,
+    .topbar-right #quick-launch-btn {
+      transition: color 0.18s, background 0.18s;
+      color: #757575;
+    }
+    .topbar-right button:hover,
+    .topbar-right .btn:hover,
+    .topbar-right #quick-launch-btn:hover {
+      color: #59a89c !important;
+      background: none;
+    }
+    .topbar-right button:hover svg,
+    .topbar-right .btn:hover svg,
+    .topbar-right #quick-launch-btn:hover svg {
+      stroke: #59a89c !important;
+    }
+    /* Username and role hover effect */
+    #username-btn:hover span:first-child,
+    #username-btn:focus span:first-child {
+      color: #59a89c !important;
+      font-weight: 700;
+    }
+    #username-btn:hover span:last-child,
+    #username-btn:focus span:last-child {
+      color: #59a89c !important;
+      font-weight: 700;
+    }
+  </style>
+  <script>
+    // Sidebar Manage Students collapse arrow toggle (Bootstrap native)
+    document.addEventListener('DOMContentLoaded', function() {
+      var sidebarCollapseArrow = document.querySelector('.sidebar-collapse-arrow');
+      var sidebarCollapseDiv = document.getElementById('sidebarManageStudentsCollapse');
+      if (sidebarCollapseArrow && sidebarCollapseDiv) {
+        sidebarCollapseDiv.addEventListener('show.bs.collapse', function() {
+          sidebarCollapseArrow.classList.remove('fa-chevron-right');
+          sidebarCollapseArrow.classList.add('fa-chevron-down');
+        });
+        sidebarCollapseDiv.addEventListener('hide.bs.collapse', function() {
+          sidebarCollapseArrow.classList.remove('fa-chevron-down');
+          sidebarCollapseArrow.classList.add('fa-chevron-right');
+        });
+        // Set initial arrow state
+        if (sidebarCollapseDiv.classList.contains('show')) {
+          sidebarCollapseArrow.classList.remove('fa-chevron-right');
+          sidebarCollapseArrow.classList.add('fa-chevron-down');
+        } else {
+          sidebarCollapseArrow.classList.remove('fa-chevron-down');
+          sidebarCollapseArrow.classList.add('fa-chevron-right');
+        }
+      }
+    });
+    // Removed code that forcibly removes 'show' class from submenu on load
+    // Removed code that prevented Bootstrap collapse/expand for Manage Students menu
+    // Dropdown logic: only one open at a time, with smooth animation
+    document.addEventListener('DOMContentLoaded', function() {
+      // --- Calendar Widget Dropdown ---
+      var calendarBtn = document.getElementById('calendar-widget-btn');
+      var calendarMenu = document.getElementById('calendar-widget-menu');
+      var dateSpan = document.getElementById('calendar-widget-date');
+      var calendarMonthView = document.getElementById('calendar-month-view');
+      // --- Quick Launch Dropdown ---
+      var quickLaunchBtn = document.getElementById('quick-launch-btn');
+      var quickLaunchMenu = document.getElementById('quick-launch-menu');
+      // --- Username Dropdown ---
+      var usernameBtn = document.getElementById('username-btn');
+      var avatarBtn = document.getElementById('avatar-btn');
+      var usernameMenu = document.getElementById('username-menu');
+
+      // Helper: close all dropdowns
+      function closeAllDropdowns(except) {
+        var dropdowns = [calendarMenu, quickLaunchMenu, usernameMenu];
+        dropdowns.forEach(function(menu) {
+          if (menu && menu !== except) {
+            menu.style.opacity = 0;
+            setTimeout(function() { menu.style.display = 'none'; }, 180);
+          }
+        });
+      }
+
+      // --- Calendar Month View Logic ---
+      function renderCalendar(month, year, selectedDate) {
+        var today = new Date();
+        var firstDay = new Date(year, month, 1);
+        var lastDay = new Date(year, month + 1, 0);
+        var startDay = firstDay.getDay();
+        var daysInMonth = lastDay.getDate();
+        var prevMonthLastDay = new Date(year, month, 0).getDate();
+        var html = '';
+        html += '<div class="calendar-header">';
+        html += '<button id="calendar-prev-month" title="Previous Month">&#8592;</button>';
+        html += '<span style="font-weight:700; color:#2346a0; font-size:1.08em;">' +
+          firstDay.toLocaleString('default', { month: 'long', year: 'numeric' }) + '</span>';
+        html += '<button id="calendar-next-month" title="Next Month">&#8594;</button>';
+        html += '</div>';
+        html += '<div class="calendar-grid">';
+        var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        for (var d = 0; d < 7; d++) {
+          html += '<div class="calendar-day">' + days[d] + '</div>';
+        }
+        var prevDays = (startDay + 7 - 0) % 7;
+        for (var i = 0; i < prevDays; i++) {
+          html += '<div class="calendar-date other-month">' + (prevMonthLastDay - prevDays + i + 1) + '</div>';
+        }
+        for (var date = 1; date <= daysInMonth; date++) {
+          var isToday = (date === today.getDate() && month === today.getMonth() && year === today.getFullYear());
+          var isSelected = (selectedDate && date === selectedDate.getDate() && month === selectedDate.getMonth() && year === selectedDate.getFullYear());
+          html += '<div class="calendar-date' + (isToday ? ' today' : '') + (isSelected ? ' selected' : '') + '">' + date + '</div>';
+        }
+        var totalCells = prevDays + daysInMonth;
+        var nextDays = (7 - (totalCells % 7)) % 7;
+        for (var j = 1; j <= nextDays; j++) {
+          html += '<div class="calendar-date other-month">' + j + '</div>';
+        }
+        html += '</div>';
+        calendarMonthView.innerHTML = html;
+        document.getElementById('calendar-prev-month').onclick = function(e) {
+          e.stopPropagation();
+          var newMonth = month - 1;
+          var newYear = year;
+          if (newMonth < 0) { newMonth = 11; newYear--; }
+          renderCalendar(newMonth, newYear, selectedDate);
+        };
+        document.getElementById('calendar-next-month').onclick = function(e) {
+          e.stopPropagation();
+          var newMonth = month + 1;
+          var newYear = year;
+          if (newMonth > 11) { newMonth = 0; newYear++; }
+          renderCalendar(newMonth, newYear, selectedDate);
+        };
+        var dateCells = calendarMonthView.querySelectorAll('.calendar-date:not(.other-month)');
+        dateCells.forEach(function(cell, idx) {
+          cell.onclick = function(e) {
+            e.stopPropagation();
+            var selected = new Date(year, month, idx + 1 - prevDays);
+            renderCalendar(month, year, selected);
+          };
+        });
+      }
+      var calendarState = { month: (new Date()).getMonth(), year: (new Date()).getFullYear(), selected: null };
+
+      // --- Dropdown Open/Close Handlers ---
+      function showDropdown(menu) {
+        if (!menu) return;
+        closeAllDropdowns(menu);
+        menu.style.display = 'block';
+        setTimeout(function() { menu.style.opacity = 1; }, 10);
+      }
+      function hideDropdown(menu) {
+        if (!menu) return;
+        menu.style.opacity = 0;
+        setTimeout(function() { menu.style.display = 'none'; }, 180);
+      }
+
+      // Calendar Widget
+      if (calendarBtn && calendarMenu) {
+        calendarBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (calendarMenu.style.display === 'block') {
+            hideDropdown(calendarMenu);
+          } else {
+            // Set today's date
+            if (dateSpan) {
+              var today = new Date();
+              var options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+              dateSpan.textContent = today.toLocaleDateString('en-AU', options);
+            }
+            renderCalendar(calendarState.month, calendarState.year, calendarState.selected);
+            showDropdown(calendarMenu);
+          }
+        });
+      }
+
+      // Quick Launch
+      if (quickLaunchBtn && quickLaunchMenu) {
+        quickLaunchBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (quickLaunchMenu.style.display === 'block') {
+            hideDropdown(quickLaunchMenu);
+          } else {
+            showDropdown(quickLaunchMenu);
+          }
+        });
+      }
+
+      // Username Dropdown
+      function toggleUsernameMenu(e) {
+        e.stopPropagation();
+        if (usernameMenu.style.display === 'block') {
+          hideDropdown(usernameMenu);
+        } else {
+          showDropdown(usernameMenu);
+        }
+      }
+      if (usernameBtn && usernameMenu) {
+        usernameBtn.addEventListener('click', toggleUsernameMenu);
+      }
+      if (avatarBtn && usernameMenu) {
+        avatarBtn.addEventListener('click', toggleUsernameMenu);
+      }
+
+      // Global click: close all dropdowns if click outside
+      document.addEventListener('click', function(e) {
+        if (
+          (!calendarMenu.contains(e.target) && e.target !== calendarBtn) &&
+          (!quickLaunchMenu.contains(e.target) && e.target !== quickLaunchBtn) &&
+          (!usernameMenu.contains(e.target) && e.target !== usernameBtn && e.target !== avatarBtn)
+        ) {
+          closeAllDropdowns();
+        }
+      });
+
+      // Sidebar logo switch on collapse
+      var sidebar = document.getElementById('sidebar');
+      var logo = document.getElementById('sidebar-logo');
+      var collapseBtn = document.getElementById('sidebar-collapse-btn');
+      var fullLogo = "{{ url_for('static', filename='SVG/Horizontal/H - White and Color.svg') }}";
+      var iconLogo = "{{ url_for('static', filename='SVG/Icon.svg') }}";
+      collapseBtn.addEventListener('click', function() {
+        setTimeout(function() {
+          if (sidebar.classList.contains('collapsed')) {
+            logo.src = iconLogo;
+            logo.style.width = '38px';
+          } else {
+            logo.src = fullLogo;
+            logo.style.width = '160px';
+          }
+        }, 220);
+      });
+
+      // Sidebar and topbar collapse logic (synchronized)
+      var body = document.body;
+      collapseBtn.addEventListener('click', function() {
+        sidebar.classList.toggle('collapsed');
+        body.classList.toggle('sidebar-collapsed');
+      });
+    });
+  </script>

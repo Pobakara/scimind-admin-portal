@@ -1,0 +1,443 @@
+{% extends "layout.html" %}
+{% block title %}Manage Users{% endblock %}
+{% block pagetitle %}Manage Users{% endblock %}
+
+{% block content %}
+<style>
+/* Modern table styling from manage_classes.html */
+#users-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  min-width: 800px;
+  table-layout: fixed;
+}
+#users-table thead, #users-table tfoot {
+  background: #f7fafd;
+  z-index: 2;
+}
+#users-table th, #users-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #e9ecf3;
+  line-height: 1.7;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#users-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-shadow: 0 2px 2px -2px #e9ecf3;
+  background: #f7fafd;
+  font-weight: 600;
+  color: #2346a0;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+/* ...existing CSS... */
+/* (CSS unchanged) */
+</style>
+<div class="container-fluid px-4 mt-4">
+    <ul class="nav nav-tabs" id="userAdminTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">Users</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="google-accounts-tab" data-bs-toggle="tab" data-bs-target="#google-accounts" type="button" role="tab">Google Integration Accounts</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="google-permissions-tab" data-bs-toggle="tab" data-bs-target="#google-permissions" type="button" role="tab">Google Account Permissions</button>
+      </li>
+    </ul>
+    <div class="tab-content" id="userAdminTabsContent">
+      <div class="tab-pane fade show active" id="users" role="tabpanel">
+        <div class="mt-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">User Management</h5>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">Add User</button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-bordered" id="users-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for user in users %}
+                <tr>
+                  <td>{{ user.id }}</td>
+                  <td>{{ user.username }}</td>
+                  <td>{{ user.email }}</td>
+                  <td>{{ user.role|capitalize }}</td>
+                  <td>
+                    {% if user.active %}
+                      <span class="badge bg-success">Active</span>
+                    {% else %}
+                      <span class="badge bg-secondary">Inactive</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <button class="btn btn-primary btn-sm me-1" onclick="openEditUserModal({{ user.id }})">Edit</button>
+                    <button class="btn btn-warning btn-sm me-1" onclick="openDeactivateUserModal({{ user.id }})">Deactivate</button>
+                    <button class="btn btn-danger btn-sm me-1" onclick="openDeleteUserModal({{ user.id }})">Delete</button>
+                    <button class="btn btn-secondary btn-sm" onclick="openChangePasswordModal({{ user.id }})">Password</button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="google-accounts" role="tabpanel">
+        <div class="mt-4">
+          <h5>Google Integration Accounts</h5>
+          <button class="btn btn-primary mb-2" onclick="fetchGoogleAccounts()">Refresh</button>
+          <button class="btn btn-success mb-2" data-bs-toggle="modal" data-bs-target="#addGoogleAccountModal">Add Google Account</button>
+          <table class="table table-bordered" id="google-accounts-table">
+            <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Owner User ID</th><th>Created</th><th>Last Synced</th><th>Actions</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="google-permissions" role="tabpanel">
+        <div class="mt-4">
+          <h5>Google Account Permissions</h5>
+          <button class="btn btn-primary mb-2" onclick="fetchGooglePermissions()">Refresh</button>
+          <button class="btn btn-success mb-2" data-bs-toggle="modal" data-bs-target="#addGooglePermissionModal">Add Permission</button>
+          <table class="table table-bordered" id="google-permissions-table">
+            <thead><tr><th>ID</th><th>Integration Account ID</th><th>User ID</th><th>Permission Level</th><th>Actions</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+</div>
+
+<!-- Add Google Account Modal -->
+<div class="modal fade" id="addGoogleAccountModal" tabindex="-1" aria-labelledby="addGoogleAccountModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="addGoogleAccountForm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addGoogleAccountModalLabel">Add Google Integration Account</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="gacc_name" class="form-label">Account Name</label>
+            <input type="text" class="form-control" id="gacc_name" name="account_name" required>
+          </div>
+          <div class="mb-3">
+            <label for="gacc_email" class="form-label">Google Email</label>
+            <input type="email" class="form-control" id="gacc_email" name="google_email" required>
+          </div>
+          <div class="mb-3">
+            <label for="gacc_owner" class="form-label">Owner User</label>
+            <select class="form-select" id="gacc_owner" name="owner_user_id" required>
+              <option value="" disabled selected>Select user</option>
+              {% for user in users %}
+                <option value="{{ user.id }}">{{ user.username }} (ID: {{ user.id }})</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Add Account</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Google Permission Modal -->
+<div class="modal fade" id="addGooglePermissionModal" tabindex="-1" aria-labelledby="addGooglePermissionModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="addGooglePermissionForm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addGooglePermissionModalLabel">Add Google Account Permission</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="gperm_acc" class="form-label">Integration Account</label>
+            <select class="form-select" id="gperm_acc" name="integration_account_id" required>
+              <option value="" disabled selected>Select account</option>
+              {% for acc in google_accounts %}
+                <option value="{{ acc.id }}">{{ acc.account_name }} ({{ acc.google_email }}) [ID: {{ acc.id }}]</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="gperm_user" class="form-label">User</label>
+            <select class="form-select" id="gperm_user" name="user_id" required>
+              <option value="" disabled selected>Select user</option>
+              {% for user in users %}
+                <option value="{{ user.id }}">{{ user.username }} (ID: {{ user.id }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="gperm_level" class="form-label">Permission Level</label>
+            <input type="text" class="form-control" id="gperm_level" name="permission_level" value="uploader">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Add Permission</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// --- Google Integration Accounts ---
+function fetchGoogleAccounts() {
+  fetch('/api/google_accounts').then(r=>r.json()).then(data => {
+    const tbody = document.querySelector('#google-accounts-table tbody');
+    tbody.innerHTML = '';
+    data.forEach(acc => {
+      tbody.innerHTML += `<tr>
+        <td>${acc.id}</td>
+        <td>${acc.account_name||''}</td>
+        <td>${acc.google_email}</td>
+        <td>${acc.owner_user_id}</td>
+        <td>${acc.created_at||''}</td>
+        <td>${acc.last_synced||''}</td>
+        <td><button class='btn btn-danger btn-sm' onclick='deleteGoogleAccount(${acc.id})'>Delete</button></td>
+      </tr>`;
+    });
+  });
+}
+document.getElementById('addGoogleAccountForm').onsubmit = function(e) {
+  e.preventDefault();
+  const form = e.target;
+  fetch('/api/google_accounts', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      account_name: form.account_name.value,
+      google_email: form.google_email.value,
+      owner_user_id: form.owner_user_id.value
+    })
+  }).then(r=>r.json()).then(_ => { fetchGoogleAccounts(); form.reset(); bootstrap.Modal.getOrCreateInstance(document.getElementById('addGoogleAccountModal')).hide(); });
+};
+function deleteGoogleAccount(id) {
+  if(confirm('Delete this Google Integration Account?')) {
+    fetch(`/api/google_accounts/${id}`, {method:'DELETE'}).then(_=>fetchGoogleAccounts());
+  }
+}
+
+// --- Google Account Permissions ---
+function fetchGooglePermissions() {
+  fetch('/api/google_permissions').then(r=>r.json()).then(data => {
+    const tbody = document.querySelector('#google-permissions-table tbody');
+    tbody.innerHTML = '';
+    data.forEach(perm => {
+      tbody.innerHTML += `<tr>
+        <td>${perm.id}</td>
+        <td>${perm.integration_account_id}</td>
+        <td>${perm.user_id}</td>
+        <td>${perm.permission_level}</td>
+        <td><button class='btn btn-danger btn-sm' onclick='deleteGooglePermission(${perm.id})'>Delete</button></td>
+      </tr>`;
+    });
+  });
+}
+document.getElementById('addGooglePermissionForm').onsubmit = function(e) {
+  e.preventDefault();
+  const form = e.target;
+  fetch('/api/google_permissions', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      integration_account_id: form.integration_account_id.value,
+      user_id: form.user_id.value,
+      permission_level: form.permission_level.value
+    })
+  }).then(r=>r.json()).then(_ => { fetchGooglePermissions(); form.reset(); bootstrap.Modal.getOrCreateInstance(document.getElementById('addGooglePermissionModal')).hide(); });
+};
+function deleteGooglePermission(id) {
+  if(confirm('Delete this Google Account Permission?')) {
+    fetch(`/api/google_permissions/${id}`, {method:'DELETE'}).then(_=>fetchGooglePermissions());
+  }
+}
+</script>
+
+<!-- User table and modals should be rendered here by Jinja2, not as stray endfor/endif tags. -->
+
+
+<script>
+function openEditUserModal(id) {
+  const modal = new bootstrap.Modal(document.getElementById(`editUserModal${id}`));
+  modal.show();
+}
+function openDeactivateUserModal(id) {
+  const modal = new bootstrap.Modal(document.getElementById(`deactivateUserModal${id}`));
+  modal.show();
+}
+function openDeleteUserModal(id) {
+  const modal = new bootstrap.Modal(document.getElementById(`deleteUserModal${id}`));
+  modal.show();
+}
+function openChangePasswordModal(id) {
+  const modal = new bootstrap.Modal(document.getElementById(`changePasswordModal${id}`));
+  modal.show();
+}
+</script>
+
+{# --- Place all modals after the content block for proper Bootstrap stacking --- #}
+{% for user in users %}
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal{{ user.id }}" tabindex="-1" aria-labelledby="editUserLabel{{ user.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ url_for('edit_user', id=user.id) }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editUserLabel{{ user.id }}">Edit User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="username{{ user.id }}" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username{{ user.id }}" name="username" value="{{ user.username }}" required>
+          </div>
+          <div class="mb-3">
+            <label for="email{{ user.id }}" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email{{ user.id }}" name="email" value="{{ user.email }}" required>
+          </div>
+          <div class="mb-3">
+            <label for="role{{ user.id }}" class="form-label">Role</label>
+            <select class="form-select" id="role{{ user.id }}" name="role">
+              <option value="user" {% if user.role == 'user' %}selected{% endif %}>User</option>
+              <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+            </select>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="active{{ user.id }}" name="active" {% if user.active %}checked{% endif %}>
+            <label class="form-check-label" for="active{{ user.id }}">Active</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- Deactivate User Modal -->
+<div class="modal fade" id="deactivateUserModal{{ user.id }}" tabindex="-1" aria-labelledby="deactivateUserLabel{{ user.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ url_for('deactivate_user', id=user.id) }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deactivateUserLabel{{ user.id }}">Deactivate User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to deactivate user <strong>{{ user.username }}</strong>?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-warning">Deactivate</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- Delete User Modal -->
+<div class="modal fade" id="deleteUserModal{{ user.id }}" tabindex="-1" aria-labelledby="deleteUserLabel{{ user.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ url_for('delete_user', id=user.id) }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteUserLabel{{ user.id }}">Delete User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete user <strong>{{ user.username }}</strong>?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger">Delete</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal{{ user.id }}" tabindex="-1" aria-labelledby="changePasswordLabel{{ user.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ url_for('change_password', id=user.id) }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="changePasswordLabel{{ user.id }}">Reset Password</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="new_password{{ user.id }}" class="form-label">New Password</label>
+            <input type="password" class="form-control" id="new_password{{ user.id }}" name="new_password" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Reset Password</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endfor %}
+<!-- Add User Modal (only one, outside the table and container) -->
+<!-- Bootstrap Modal Implementation -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ url_for('add_user') }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addUserModalLabel">Add New User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username" name="username" required>
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" required>
+          </div>
+          <div class="mb-3">
+            <label for="role" class="form-label">Role</label>
+            <select class="form-select" id="role" name="role">
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Add User</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

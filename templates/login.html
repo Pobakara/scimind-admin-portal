@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | SciMind Admin Portal</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body style="background:#e9ecf3;">
+<style>
+:root {
+  --primary-blue: #2346a0;
+  --panel-radius: 24px;
+  --shadow: 0 8px 32px rgba(35,70,160,0.10);
+  --input-border: #dbe3f0;
+  --input-radius: 8px;
+  --gray: #979595;
+}
+
+body {
+  background: #e9ecf3;
+}
+
+.login-main-container {
+  display: flex;
+  max-width: 900px;
+  min-height: 520px;
+  margin: 60px auto;
+  border-radius: var(--panel-radius);
+  overflow: visible;
+  box-shadow: var(--shadow);
+  background: none;
+  position: relative;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.login-left {
+  flex: 1.1;
+  background: linear-gradient(135deg, #1a4fa3 0%, #0b81a2 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 40px;
+  min-width: 320px;
+  min-height: 520px;
+  border-radius: 32px 0 32px 32px;
+  margin-right: -60px;
+  z-index: 2;
+  box-shadow: 0 8px 32px rgba(35,70,160,0.18), 8px 0 24px rgba(35,70,160,0.10);
+}
+
+.login-left-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.login-logo {
+  width: 120px;
+  height: 120px;
+  display: block;
+}
+
+.login-left-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.login-left-copyright {
+  font-size: 0.60rem;
+  color: #e0f7fa;
+  opacity: 0.7;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.login-right-panel {
+  background: #fff;
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 0 var(--panel-radius) var(--panel-radius) 0;
+  box-shadow: 0 0 0 0 transparent;
+  position: relative;
+  min-width: 0;
+  min-height: 520px;
+  overflow: hidden;
+  z-index: 1;
+}
+
+
+.login-form-wrapper {
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 48px 1px 40px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  box-sizing: border-box;
+}
+
+.login-form-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  margin-bottom: 8px;
+  text-align: left;
+  margin-left: 42px;
+}
+
+.login-form-subtitle {
+  font-size: 1.05rem;
+  color: #4a5a6a;
+  margin-bottom: 28px;
+  text-align: left;
+  margin-left: 42px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.input-group {
+  position: relative;
+}
+
+.input-group i {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--primary-blue);
+  font-size: 1.1em;
+}
+
+.login-form input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 80px 14px 40px;
+  border-radius: var(--input-radius);
+  border: 1px solid var(--input-border);
+  font-size: 1.08rem;
+  background: #f7fafd;
+  color: #222;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.login-form input:focus {
+  border: 1.5px solid var(--primary-blue);
+  background: #fff;
+}
+
+.login-form button[type="submit"] {
+  width: 100%;
+  padding: 12px 0;
+  border-radius: var(--input-radius);
+  border: none;
+  background: var(--primary-blue);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-top: 8px;
+  box-shadow: 0 2px 8px rgba(35,70,160,0.07);
+  transition: background 0.2s;
+}
+
+.login-form button[type="submit"]:hover {
+  background: #18316d;
+}
+
+.forgot-link {
+  display: block;
+  text-align: right;
+  margin-top: -10px;
+  margin-bottom: 8px;
+  color: var(--gray);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  opacity: 1;
+}
+
+.login-signup-link {
+  text-align: center;
+  margin-top: 18px;
+  color: #4a5a6a;
+  font-size: 0.97rem;
+}
+
+.login-signup-link a {
+  color: var(--primary-blue);
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .login-main-container {
+    flex-direction: column;
+    min-width: 0;
+    border-radius: var(--panel-radius);
+  }
+  .login-left-panel, .login-right-panel {
+    border-radius: 0;
+    min-width: 0;
+    width: 100%;
+    padding: 32px 10px;
+  }
+  .login-right-panel {
+    border-radius: 0 0 var(--panel-radius) var(--panel-radius);
+  }
+}
+</style>
+<div class="login-main-container">
+  <div class="login-left">
+    <div class="login-left-center">
+      <img src="/static/PNG/White.png" alt="Logo" class="login-logo">
+    </div>
+    <div class="login-left-portal" style="font-size:24px; color:#eeeeee; text-align:center; margin:12px 0 8px 0; font-weight:600;">Admin Portal</div>
+    <div class="login-left-copyright">
+      @ 2025 SciMind Education (Pty) Ltd. All rights reserved.
+    </div>
+  </div>
+  <div class="login-right-panel">
+    <div class="login-form-wrapper">
+      <div class="login-form-title">Sign In!</div>
+      <div class="login-form-subtitle">Enter your details to sign in to your account</div>
+      <form class="login-form" method="post">
+        <div class="input-group">
+          <i class="fas fa-user"></i>
+          <input type="text" name="username" id="username" placeholder="Enter your username/email" required autocomplete="username">
+        </div>
+        <div class="input-group">
+          <i class="fas fa-key"></i>
+          <input type="password" name="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
+        </div>
+        <a href="#" class="forgot-link">Having trouble in login?</a>
+        <button type="submit">Log in</button>
+      </form>
+      {% if error %}
+        <script>
+          window.onload = function() {
+            alert("{{ error|e }}");
+          };
+        </script>
+      {% endif %}
+      <div class="login-signup-link">
+        Don't have an account? <a href="#">Sign Up</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

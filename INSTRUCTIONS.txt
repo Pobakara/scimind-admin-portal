@@ -1,0 +1,53 @@
+# SciMind AdminPortal - Setup & Migration Instructions
+
+## 1. Environment Setup
+
+1. Open Command Prompt (not PowerShell) in the project folder.
+2. Create a virtual environment (if not already created):
+   python -m venv venv
+3. Activate the virtual environment:
+   .\venv\Scripts\activate.bat
+4. Install dependencies:
+   pip install flask flask-sqlalchemy flask-migrate flask-login
+
+## 2. Database Migration (First Time)
+
+1. Set the Flask app environment variable:
+   set FLASK_APP=app.py
+2. Initialize migrations (only once):
+   python -m flask db init
+3. Generate the initial migration:
+   python -m flask db migrate -m "Initial migration"
+4. Apply the migration to create the database:
+   python -m flask db upgrade
+
+## 3. Making Model Changes (Future Updates)
+
+1. Edit your models in app.py as needed.
+2. Generate a new migration:
+   python -m flask db migrate -m "Describe your change"
+3. Apply the migration:
+   python -m flask db upgrade
+
+## 4. Running the App
+
+1. Make sure your venv is activated and FLASK_APP is set:
+   set FLASK_APP=app.py
+2. Run the app:
+   python app.py
+
+## 5. Troubleshooting
+
+- If 'flask' is not recognized, always use: python -m flask ...
+- If you get missing module errors, run: pip install -r requirements.txt (if available) or install missing packages manually.
+- If you get migration errors, check the migrations/ folder and your model changes.
+
+## 6. Notes
+
+- Only run `python -m flask db init` once per project.
+- For every model change, repeat steps in section 3.
+- Database file is at: data/classes.db
+
+---
+
+For more help, see Flask-Migrate documentation: https://flask-migrate.readthedocs.io/en/latest/

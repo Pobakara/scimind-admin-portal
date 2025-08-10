@@ -1,0 +1,162 @@
+{% extends "layout.html" %}
+{% block title %}Admin Tool{% endblock %}
+{% block pagetitle %}Admin Tool{% endblock %}
+
+{% block content %}
+
+<div class="mb-3">
+  <label for="sync-teacher-email" class="form-label">Teacher Google Email:</label>
+  <input type="email" id="sync-teacher-email" class="form-control d-inline-block" style="width:auto;" placeholder="teacher@email.com">
+  <button class="btn btn-secondary ms-2" id="btn-sync-gclass">Sync Google Classrooms</button>
+  <button class="btn btn-secondary ms-2" id="btn-sync-yt">Sync YouTube Playlists</button>
+</div>
+
+<div class="container mt-4">
+  <h2>Admin Mapping: Internal Classes ↔ Google Classroom & YouTube</h2>
+  <div id="mapping-feedback" class="my-2"></div>
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle" id="mapping-table">
+      <thead class="table-light">
+        <tr>
+          <th>Class Name</th>
+          <th>Subject</th>
+          <th>Year</th>
+          <th>Batch</th>
+          <th>Google Classroom</th>
+          <th>YouTube Playlist</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in classes %}
+        <tr data-class-code="{{ c.class_code }}">
+          <td>{{ c.class_name }}</td>
+          <td>{{ c.subject }}</td>
+          <td>{{ c.year_level }}</td>
+          <td>{{ c.batch }}</td>
+          <td>
+            <select class="form-select gclass-select" data-initial="{{ c.courseId or '' }}">
+              <option value="">-- Not Linked --</option>
+            </select>
+          </td>
+          <td>
+            <select class="form-select playlist-select" data-initial="{{ c.playlist_id or '' }}">
+              <option value="">-- Not Linked --</option>
+            </select>
+          </td>
+          <td>
+            <button class="btn btn-primary btn-save-mapping">Save</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<script>
+// --- Fetch Google Classroom courses and YouTube playlists ---
+let gclassCourses = [];
+let ytPlaylists = [];
+
+function showMappingFeedback(msg, type="info") {
+  const el = document.getElementById('mapping-feedback');
+  el.innerHTML = `<div class="alert alert-${type} py-2">${msg}</div>`;
+}
+
+async function fetchGoogleClassroomCourses() {
+  const res = await fetch('/api/google_classroom_courses');
+  gclassCourses = await res.json();
+}
+async function fetchYouTubePlaylists() {
+  const res = await fetch('/api/youtube_playlists');
+  ytPlaylists = await res.json();
+}
+
+function populateDropdowns() {
+  document.querySelectorAll('.gclass-select').forEach(sel => {
+    sel.innerHTML = '<option value="">-- Not Linked --</option>' +
+      gclassCourses.map(c => `<option value="${c.id}">${c.name}${c.section ? ' ('+c.section+')' : ''}</option>`).join('');
+    if (sel.dataset.initial) sel.value = sel.dataset.initial;
+  });
+  document.querySelectorAll('.playlist-select').forEach(sel => {
+    sel.innerHTML = '<option value="">-- Not Linked --</option>' +
+      ytPlaylists.map(p => `<option value="${p.id}">${p.title}</option>`).join('');
+    if (sel.dataset.initial) sel.value = sel.dataset.initial;
+  });
+}
+
+async function saveMapping(classCode, gclassId, playlistId, btn) {
+  btn.disabled = true;
+  showMappingFeedback('Saving...', 'info');
+  try {
+    const res = await fetch(`/api/map_class_resources/${classCode}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ course_id: gclassId, playlist_id: playlistId })
+    });
+    const data = await res.json();
+    if (data.status === 'success') {
+      showMappingFeedback('Mapping saved!', 'success');
+    } else {
+      showMappingFeedback(data.message || 'Error saving mapping', 'danger');
+    }
+  } catch (e) {
+    showMappingFeedback('Network error', 'danger');
+  }
+  btn.disabled = false;
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await fetchGoogleClassroomCourses();
+  await fetchYouTubePlaylists();
+  populateDropdowns();
+  document.querySelectorAll('.btn-save-mapping').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const row = btn.closest('tr');
+      const classCode = row.dataset.classCode;
+      const gclassId = row.querySelector('.gclass-select').value;
+      const playlistId = row.querySelector('.playlist-select').value;
+      saveMapping(classCode, gclassId, playlistId, btn);
+    });
+  });
+});
+
+document.getElementById('btn-sync-gclass').onclick = async function() {
+  const email = document.getElementById('sync-teacher-email').value.trim();
+  if (!email) return showMappingFeedback('Enter teacher email', 'warning');
+  showMappingFeedback('Syncing Google Classrooms...', 'info');
+  const res = await fetch('/api/sync_google_classrooms', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ teacher_email: email })
+  });
+  const data = await res.json();
+  if (data.status === 'success') {
+    showMappingFeedback(`Google Classrooms synced. Added: ${data.added}, Updated: ${data.updated}`, 'success');
+    await fetchGoogleClassroomCourses();
+    populateDropdowns();
+  } else {
+    showMappingFeedback(data.message || 'Sync failed', 'danger');
+  }
+};
+
+document.getElementById('btn-sync-yt').onclick = async function() {
+  const email = document.getElementById('sync-teacher-email').value.trim();
+  if (!email) return showMappingFeedback('Enter teacher email', 'warning');
+  showMappingFeedback('Syncing YouTube Playlists...', 'info');
+  const res = await fetch('/api/sync_youtube_playlists', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ teacher_email: email })
+  });
+  const data = await res.json();
+  if (data.status === 'success') {
+    showMappingFeedback(`YouTube Playlists synced. Added: ${data.added}, Updated: ${data.updated}`, 'success');
+    await fetchYouTubePlaylists();
+    populateDropdowns();
+  } else {
+    showMappingFeedback(data.message || 'Sync failed', 'danger');
+  }
+};
+</script>
+{% endblock %}
