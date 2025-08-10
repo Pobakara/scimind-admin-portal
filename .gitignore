@@ -1,0 +1,83 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# Environment variables
+.env
+.env.*
+
+# Flask instance folder
+instance/
+.webassets-cache
+
+# SQLite database
+*.db
+*.sqlite3
+
+# Local data, temp, and uploads
+temp_uploads/
+data/
+migrations/__pycache__/
+__pycache__/
+
+# Google/YouTube/Cloud credentials and tokens
+config/classroom_credentials.json
+config/credentials.json
+config/classroom_token.pickle
+tokens/
+tokens/*
+*.pickle
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
