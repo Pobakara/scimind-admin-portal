@@ -71,6 +71,7 @@ __pycache__/
 config/classroom_credentials.json
 config/credentials.json
 config/classroom_token.pickle
+config/token.pickle
 tokens/
 tokens/*
 *.pickle
