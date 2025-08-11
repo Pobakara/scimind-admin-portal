@@ -72,6 +72,7 @@ config/classroom_credentials.json
 config/credentials.json
 config/classroom_token.pickle
 config/token.pickle
+config/webportal_credentials.json
 tokens/
 tokens/*
 *.pickle
