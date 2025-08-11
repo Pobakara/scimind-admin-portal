@@ -36,6 +36,12 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", f"sqlite:///{os.path.join(basedir, 'data', 'SciMindMain.db')}")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
+creds = os.environ.get("GOOGLE_CREDENTIALS_JSON")
+if creds:
+    os.makedirs("config", exist_ok=True)
+    with open("config/webportal_credentials.json", "w") as f:
+        f.write(creds)
  
 migrate = Migrate(app, db)
 
