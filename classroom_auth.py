@@ -11,8 +11,8 @@ SCOPES = [
     "https://www.googleapis.com/auth/classroom.coursework.students"
 ]
 
-CREDENTIALS_FILE = "config/classroom_credentials.json"
-TOKEN_FILE = "config/classroom_token.pickle"
+CREDENTIALS_FILE = os.environ.get("GOOGLE_CREDENTIALS_FILE", "config/webportal_credentials.json")
+TOKEN_FILE = os.environ.get("CLASSROOM_TOKEN_FILE", "config/classroom_token.pickle")
 
 def get_classroom_service():
     """Authenticate and return a Classroom API service instance."""

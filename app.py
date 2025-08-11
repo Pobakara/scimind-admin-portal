@@ -31,9 +31,9 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 app = Flask(__name__)
-app.secret_key = "your_super_secret_key"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "fallback_dev_secret")
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'data', 'SciMindMain.db')}"
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", f"sqlite:///{os.path.join(basedir, 'data', 'SciMindMain.db')}")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
  

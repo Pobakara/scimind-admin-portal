@@ -9,8 +9,8 @@ SCOPES = [
     "https://www.googleapis.com/auth/youtube.upload",
     "https://www.googleapis.com/auth/youtube.force-ssl"
 ]
-CREDENTIALS_FILE = "config/credentials.json"
-TOKEN_FILE = "config/token.pickle"
+CREDENTIALS_FILE = os.environ.get("GOOGLE_CREDENTIALS_FILE", "config/webportal_credentials.json")
+TOKEN_FILE = os.environ.get("YOUTUBE_TOKEN_FILE", "config/token.pickle")
 
 # --- AUTHENTICATION ---
 def get_authenticated_service():
