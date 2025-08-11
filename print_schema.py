@@ -2,6 +2,12 @@ import sqlite3
 
 DB_PATH = 'data/SciMindMain.db'
 
+con = sqlite3.connect(DB_PATH)
+with open('dump.sql', 'w', encoding='utf-8') as f:
+    for line in con.iterdump():
+        f.write('%s\n' % line)
+con.close()
+
 def print_schema():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
