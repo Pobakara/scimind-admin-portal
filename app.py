@@ -1,10 +1,12 @@
+import os
+
 creds = os.environ.get("GOOGLE_CREDENTIALS_JSON")
 if creds:
     os.makedirs("config", exist_ok=True)
     with open("config/webportal_credentials.json", "w") as f:
         f.write(creds)
-        
-import os
+
+
 import json
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
